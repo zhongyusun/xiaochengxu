@@ -1,0 +1,14 @@
+<style lang="less">
+
+</style>
+<template>
+  文章
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class My extends wepy.page {
+
+  }
+</script>
