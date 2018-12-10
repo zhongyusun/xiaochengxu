@@ -1,0 +1,95 @@
+<style lang="less">
+
+</style>
+<template>
+  <view>
+    <view class="weui-panel">
+      <view class="weui-panel__hd">文章列表</view>
+      <repeat for="{{articles}}" key="index" index="index" item="item">
+        <view class="weui-panel__bd">
+          <navigator url="/pages/article?id={{item.id}}" hover-class="none">
+            <view class="weui-media-box weui-media-box_text">
+
+              <view class="weui-media-box__title weui-media-box__title_in-text">
+                {{item.title}}
+              </view>
+
+              <view class="weui-media-box__info">
+                <view class="weui-media-box__info__meta">{{item.user.data.name}}</view>
+                <view class="weui-media-box__info__meta">{{item.created_at}}</view>
+                <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">
+                  {{item.category.data.title}}
+                </view>
+              </view>
+            </view>
+          </navigator>
+        </view>
+      </repeat>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import article from '@/services/article'
+
+  export default class Category extends wepy.page {
+    config = {
+      // 1) 开启下拉刷新功能
+      enablePullDownRefresh: true,
+      // 监听用户上拉触底事件。
+      onReachBottomDistance: 60
+    }
+    data = {
+      cid: null,
+      articles: [],
+      page: 1
+    }
+
+    // 2) 下拉刷新获取数据
+    async onPullDownRefresh() {
+      this.page = 1
+      this.articles = []
+      // 重新获取一次数据
+      await this.getArticleList()
+      // 停⽌止当前⻚面下拉刷新
+      wepy.stopPullDownRefresh()
+    }
+
+    // 监听用户上拉触底事件。
+    async onReachBottom() {
+      this.page += 1
+      // Do something when page reach bottom.
+      // console.log(this.getArticleList())
+      let response = await this.getArticleList()
+      // console.log(response)
+      if (this.page > response.data.meta.pagination.total_pages) {
+        wepy.showLoading({title: '没有更多了'})
+        setTimeout(function () {
+          wepy.hideLoading()
+        }, 1500)
+      }
+    }
+
+    // 获取指定栏目文章列表
+    async getArticleList() {
+      let response = await article.get({cid: this.cid}, this.page)
+      // console.log(response)
+      if (response.statusCode === 200) {
+        // console.log(response)
+        // this.articles = response.data.data
+        // 将每次来的数据追加到 articles 后面
+        this.articles = this.articles.concat(response.data.data)
+        this.$apply()
+      }
+      return response
+    }
+
+    onLoad(options) {
+      // console.log(options)
+      this.cid = options.cid
+      // console.log(this.cid)
+      this.getArticleList()
+    }
+  }
+</script>

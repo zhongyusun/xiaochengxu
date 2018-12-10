@@ -10,21 +10,106 @@
   }
 </style>
 <template>
-  <view class="user">
+  <view class="user" wx:if="{{isLogin}}">
     <view class="icon">
-      <image mode="aspectFill" src="../images/user.jpg"></image>
-      <view>桀骜</view>
+      <image mode="aspectFill" src="{{user.icon}}"></image>
+      <view>{{user.name}}</view>
+      <button type="default" @tap="logout"> 退出</button>
     </view>
   </view>
-  <view>
-    <button type="primary" size="default" plain="true"> 退出</button>
+  <view wx:if="{{!isLogin}}">
+    <form @submit="post">
+      <view class="weui-cells__title">登录</view>
+      <view class="weui-cells weui-cells_after-title">
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">邮箱</view>
+          </view>
+          <view class="weui-cell__bd">
+            <input class="weui-input" name="email" value="" placeholder="请输入邮箱"/>
+          </view>
+        </view>
+        <view class="weui-cell weui-cell_input">
+          <view class="weui-cell__hd">
+            <view class="weui-label">密码</view>
+          </view>
+          <view class="weui-cell__bd">
+            <input class="weui-input" name="password" type="password" value="" placeholder="请输入密码"/>
+          </view>
+        </view>
+      </view>
+      <button type="default" form-type="submit"> 登录</button>
+    </form>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import util from '@/services/util'
+  import user from '@/services/user'
 
   export default class My extends wepy.page {
+    data = {
+      isLogin: util.getToken(),
+      user: {}
+    }
 
+    async onLoad() {
+      if (this.isLogin) {
+        let response = await user.getUserInfo()
+        // console.log(response.data)
+        if (response.statusCode === 200) {
+          this.user = response.data
+          this.$apply()
+        }
+      }
+    }
+
+    // 注销登录
+    async logout() {
+      let response = await util.logout()
+      console.log(response)
+      if (response.statusCode === 200) {
+        this.isLogin = false
+        this.$apply()
+      }
+    }
+
+    // 登录数据提交
+    async post(e) {
+      // console.log(e)
+      let formData = e.detail.value
+      // console.log(formData.email)
+      if (!formData.email || !formData.password) {
+        wepy.showToast({
+          title: '请输入邮箱或密码',
+          icon: 'none',
+          duration: 2000
+        })
+        return false
+      }
+      if (!/.+@.+/.test(formData.email)) {
+        wepy.showToast({
+          title: '请输入正确邮箱',
+          icon: 'none',
+          duration: 2000
+        })
+        return false
+      }
+      if (formData.password.length < 6) {
+        wepy.showToast({
+          title: '密码不正确',
+          icon: 'none',
+          duration: 2000
+        })
+        return false
+      }
+      let response = await util.login({data: formData})
+      // console.log(response)
+      if (response.statusCode === 200) {
+        this.isLogin = true
+        this.$apply()
+      }
+    }
   }
 </script>

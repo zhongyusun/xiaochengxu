@@ -1,14 +1,55 @@
 <style lang="less">
-
+  .title {
+    border-bottom: 1px solid #CCCCCC;
+    text-align: center;
+  }
+  .content{
+    padding: 10px;
+    margin-left: 5px;
+    text-indent: 2em;
+  }
 </style>
 <template>
-  文章
+  <import src="../wxParse/wxParse.wxml"/>
+  <view class="title">{{field.title}}</view>
+  <template class="content" is="wxParse" data="{{wxParseData:article.nodes}}"/>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import article from '@/services/article'
+  import WxParse from '@/wxParse/wxParse.js'
+  export default class Article extends wepy.page {
+    data = {
+      field: {}
+    }
 
-  export default class My extends wepy.page {
+    // async getArticleById(id) {
+    //   let response = await article.show(id)
+    //   if (response.statusCode === 200) {
+    //     console.log(response)
+    //     this.field = response.data.data
+    //     this.$apply()
+    //   }
+    // }
+    // onLoad = (options) => {
+    //   // console.log(options)
+    //   this.getArticleById(options.id)
+    // }
 
+    async onLoad(options) {
+      // 获取参数,可打印 options 查看
+      console.log(options)
+      let response = await article.show(options.id)
+      if (response.statusCode === 200) {
+        let field = response.data.data
+        var that = this
+        WxParse.wxParse('article', 'md', field.content, that, 5)
+
+        this.field = field
+        this.$apply()
+      }
+    }
   }
+
 </script>

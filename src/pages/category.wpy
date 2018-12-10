@@ -5,22 +5,37 @@
   <view>
     <view class="weui-cells__title">栏目列表</view>
     <view class="weui-cells weui-cells_after-title">
-      <navigator url="" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
-        <view class="weui-cell__bd">cell standard</view>
-        <view class="weui-cell__ft weui-cell__ft_in-access"></view>
-      </navigator>
-      <navigator url="" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
-        <view class="weui-cell__bd">cell standard</view>
-        <view class="weui-cell__ft weui-cell__ft_in-access"></view>
-      </navigator>
+      <repeat for="{{categories}}" key="index" index="index" item="item">
+        <navigator url="/pages/list?cid={{item.id}}" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+          <view class="weui-cell__bd">{{item.title}}</view>
+          <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+        </navigator>
+      </repeat>
     </view>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
+  import category from '@/services/category'
 
   export default class Category extends wepy.page {
+    data = {
+      categories: []
+    }
 
+    // 获取文章列表
+    async getCategoryList() {
+      let response = await category.get()
+      if (response.statusCode === 200) {
+        // console.log(response)
+        this.categories = response.data.categories
+        this.$apply()
+      }
+    }
+
+    onLoad = () => {
+      this.getCategoryList()
+    }
   }
 </script>

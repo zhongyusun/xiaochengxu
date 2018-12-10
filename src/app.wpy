@@ -1,5 +1,6 @@
 <style lang="less">
   @import 'style/weui.less';
+  @import "wxParse/wxParse.wxss";
 
   .container {
     height: 100%;
@@ -28,7 +29,8 @@
         'pages/login',
         'pages/category',
         'pages/my',
-        'pages/article'
+        'pages/article',
+        'pages/list'
       ],
       window: {
         backgroundTextStyle: 'light',

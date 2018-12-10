@@ -21,7 +21,7 @@
             <icon class="weui-icon-search_in-box" type="search" size="14"></icon>
             <input type="text" class="weui-search-bar__input" placeholder="搜索" value="{{inputVal}}"
                    focus="{{inputShowed}}" bindinput="inputTyping"/>
-            <view class="weui-icon-clear" wx:if="{{inputVal.length > 0}}" bindtap="clearInput">
+            <view class="weui-icon-clear" wepy:if="{{inputVal.length > 0}}" bindtap="clearInput">
               <icon type="clear" size="14"></icon>
             </view>
           </view>
@@ -32,22 +32,7 @@
         </view>
         <view class="weui-search-bar__cancel-btn" hidden="{{!inputShowed}}" bindtap="hideInput">取消</view>
       </view>
-      <view class="weui-cells searchbar-result" wx:if="{{inputVal.length > 0}}">
-        <navigator url="" class="weui-cell" hover-class="weui-cell_active">
-          <view class="weui-cell__bd">
-            <view>实时搜索文本</view>
-          </view>
-        </navigator>
-        <navigator url="" class="weui-cell" hover-class="weui-cell_active">
-          <view class="weui-cell__bd">
-            <view>实时搜索文本</view>
-          </view>
-        </navigator>
-        <navigator url="" class="weui-cell" hover-class="weui-cell_active">
-          <view class="weui-cell__bd">
-            <view>实时搜索文本</view>
-          </view>
-        </navigator>
+      <view class="weui-cells searchbar-result" wepy:if="{{inputVal.length > 0}}">
         <navigator url="" class="weui-cell" hover-class="weui-cell_active">
           <view class="weui-cell__bd">
             <view>实时搜索文本</view>
@@ -62,7 +47,7 @@
       <!--repeat 是 wepy 组件循环渲染:https://tencent.github.io/wepy/document.html#/?id=%E7%BB%84%E4%BB%B6%E7%9A%84%E5%BE%AA%E7%8E%AF%E6%B8%B2%E6%9F%93-->
       <repeat for="{{imgUrls}}" key="index" index="index" item="item">
         <swiper-item>
-          <image src="{{item.image}}" class="slide-image" width="375" height="667"/>
+          <image src="{{item.path}}" class="slide-image" width="100%" height="100%"/>
         </swiper-item>
       </repeat>
     </swiper>
@@ -73,19 +58,21 @@
   <view>
     <view class="weui-panel">
       <view class="weui-panel__hd">文章列表</view>
-      <view class="weui-panel__bd">
-        <view class="weui-media-box weui-media-box_text">
-          <navigator url="" hover-class="none">
-            <view class="weui-media-box__title weui-media-box__title_in-text">标题一</view>
-          </navigator>
-          <view class="weui-media-box__desc">由各种物质组成的巨型球状天体，叫做星球。星球有一定的形状，有自己的运行轨道。</view>
-          <view class="weui-media-box__info">
-            <view class="weui-media-box__info__meta">文字来源</view>
-            <view class="weui-media-box__info__meta">时间</view>
-            <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">其它信息</view>
+      <repeat for="{{articles}}" key="index" index="index" item="item">
+        <view class="weui-panel__bd">
+          <view class="weui-media-box weui-media-box_text">
+            <navigator url="/pages/article?id={{item.id}}" hover-class="none">
+              <view class="weui-media-box__title weui-media-box__title_in-text">{{item.title}}</view>
+            </navigator>
+            <view class="weui-media-box__info">
+              <view class="weui-media-box__info__meta">{{item.user.data.name}}</view>
+              <view class="weui-media-box__info__meta">{{item.created_at}}</view>
+              <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">{{item.category.data.title}}
+              </view>
+            </view>
           </view>
         </view>
-      </view>
+      </repeat>
     </view>
   </view>
 
@@ -93,11 +80,53 @@
 
 <script>
   import wepy from 'wepy'
-  // 引入我们之前创建的 api.js,这里的@会指向 src 目录
-  import util from '@/services/util'
+
+  import flash from '@/services/flash'
+  import article from '@/services/article'
 
   export default class Index extends wepy.page {
+    data = {
+      imgUrls: [],
+      inputShowed: false,
+      inputVal: '',
+      articles: []
+    }
+
+    // 获取轮播图数据
+    // async 和 await 成对出现，js加载快，axaj加载慢，等待axaj加载完成后再加载后面的
+    async getFlashList() {
+      // 调用 services/flash.js   get 方法 获取3个轮播图数据
+      // console.log(flash.get(3))
+      let response = await flash.get(2)
+      // console.log(response)
+      // 检测码如果是200
+      if (response.statusCode === 200) {
+        // 将得到的轮播图数据存储给imageUrls
+        this.imgUrls = response.data.flashes
+        // 因为是异步请求过来的数据,赋值给 imageUrls ,不会立刻改变的,这个每个前段框架不一样
+        // 想让数据改变的话 需要执行 apply 方法
+        this.$apply()
+      }
+    }
+
+    // 获取文章列表
+    async getArticleList() {
+      let response = await article.get()
+      // console.log(response.data.data)
+      if (response.statusCode === 200) {
+        // 将得到的轮播图数据存储给imageUrls
+        this.articles = response.data.data
+        // 因为是异步请求过来的数据,赋值给 imageUrls ,不会立刻改变的,这个每个前段框架不一样
+        // 想让数据改变的话 需要执行 apply 方法
+        this.$apply()
+      }
+    }
+
     onLoad = () => {
+      // 轮播图
+      this.getFlashList()
+      // 文章数据列表
+      this.getArticleList()
       // 测试获取栏目
       // util.api({url: 'categories'})
       // console.log(345)
@@ -105,25 +134,7 @@
       // 请求时候传入数据中 data 是什么,data 是小程序规定携带的数据放在 data 中
       // 参考小程序文档:https://developers.weixin.qq.com/miniprogram/dev/api/wx.request.html
       // util.login({data: {email: '2460245313@qq.com', password: '123456'}})
-      util.logout()
-    }
-    data = {
-      imgUrls: [
-        {
-          id: 1,
-          image: '../images/tooopen_sy_143912755726.jpg'
-        },
-        {
-          id: 2,
-          image: '../images/tooopen_sy_175866434296.jpg'
-        },
-        {
-          id: 3,
-          image: '../images/tooopen_sy_175833047715.jpg'
-        }
-      ],
-      inputShowed: false,
-      inputVal: ''
+      // util.logout()
     }
     methods = {
       showInput() {
